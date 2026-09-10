@@ -1,67 +1,54 @@
-/*
--- in your master database
-
-CREATE LOGIN NandaSurendra
-
-WITH PASSWORD = 'MI$T460Instructor';
-
--- switch to your mist460-rdb-lastname database;
-
-CREATE USER NandaSurendra
-
-FOR LOGIN NandaSurendra;
-
-ALTER ROLE db_owner ADD MEMBER NandaSurendra;
-*/
-
-drop table if exists RoomReservation;
+go
 drop table if exists RoomAvailability;
-drop table if exists AppUser;
+go
+drop table if exists Reservation;
+go
 drop table if exists Room;
 go
+drop table if exists AppUser;
+go
 
-create table Room
-(
+
+create table Room (
     RoomID int identity(1,1) primary key,
     RoomNumber varchar(10) not null,
     Floor int not null,
     Seats int not null,
-    Whiteboard bit not null, -- for true or false
-    Currentstatus bit not null
+    Whiteboard bit not null,
+    CurrentStatus varchar(20) not null
 );
-
 go
 
-create table RoomAvailability
-(
+
+create table AppUser (
+    AppUserID int identity(1,1) primary key,
+    Email varchar(100) not null,
+    Password varchar(100) not null
+);
+go
+
+
+create table Reservation (
+    ReservationID int identity(1,1) primary key,
+    AppUserID int not null,
+    ReservationDateTime datetime not null,
+    CheckInDateTime datetime,
+    CheckOutDateTime datetime,
+    TotalTime int,
+    ReservationStatus varchar(20) not null,
+    constraint FK_Reservation_AppUser foreign key (AppUserID) references AppUser(AppUserID)
+);
+go
+
+
+create table RoomAvailability (
     RoomAvailabilityID int identity(1,1) primary key,
     RoomID int not null,
+    ReservationID int,
     AvailableDate date not null,
     AvailableStartTime time not null,
     AvailableEndTime time not null,
-    AvailableStatus bit not null,
-    constraint FK_RoomAvailability_Room foreign key (RoomID) references Room(RoomID)
-);
-
-go
-
-create table AppUser
-(
-    AppUserID int identity(1,1) primary key,
-    UserEmail varchar(50) not null,
-    UserPassword varchar(50) not null
-);
-
-go
-
-create table RoomReservation
-(
-    RoomReservationID int identity(1,1) primary key,
-    RoomAvailabilityID int not null,
-    ReservationDate date not null,
-    ReservationStartTime time not null,
-    ReservationEndTime time not null,
-    ReservedByUser int not null,
-    constraint FK_RoomReservation_AppUser foreign key (ReservedByUser) references AppUser(AppUserID),
-    constraint FK_RoomReservation_RoomAvailability foreign key (RoomAvailabilityID) references RoomAvailability(RoomAvailabilityID)
+    AvailabilityStatus varchar(20) not null,
+    constraint FK_RoomAvailability_Room foreign key (RoomID) references Room(RoomID),
+    constraint FK_RoomAvailability_Reservation foreign key (ReservationID) references Reservation(ReservationID)
 );
