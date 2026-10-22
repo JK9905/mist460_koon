@@ -1,65 +1,98 @@
+/*
+-- in your master database
 
+CREATE LOGIN NandaSurendra
+WITH PASSWORD = 'MI$T460Instructor';
+
+-- switch to your mist460-rdb-lastname database;
+
+CREATE USER NandaSurendra
+FOR LOGIN NandaSurendra;
+
+ALTER ROLE db_owner ADD MEMBER NandaSurendra;
+*/
+
+-- drop in FK-dependency order
+drop table if exists SensorLog;
+drop table if exists Sensor;
+drop table if exists RoomAvailability;
+drop table if exists Reservation;
+drop table if exists AppUser;
+drop table if exists Room;
 go
--- AppUser (5 rows)
-insert into AppUser (Email, Password) values
-('cc00117@mix.wvu.edu', 'Passw0rd!1'),
-('srh00041@mix.wvu.edu', 'Passw0rd!2'),
-('jak00049@mix.wvu.edu', 'Passw0rd!3'),
-('dvh00031@mix.wvu.edu', 'Passw0rd!4'),
-('mtp00011@mix.wvu.edu', 'Passw0rd!5');
 
-
-go
-
--- Room (5 rows)
-insert into Room (RoomNumber, Floor, Seats, Whiteboard, CurrentStatus) values
-('101', 1, 4, 1, 'Available'),
-('102', 1, 6, 0, 'Available'),
-('201', 2, 8, 1, 'In use'),
-('202', 2, 4, 0, 'Available'),
-('301', 3, 10, 1, 'Available');
-
-go
-
--- Reservation (10 rows)
-insert into Reservation (AppUserID, ReservationDateTime, CheckInDateTime, CheckOutDateTime, TotalTime, ReservationStatus) values
-(1, '2026-09-10 10:00', '2026-09-10 10:02', '2026-09-10 10:58', 56, 'Completed'),
-(2, '2026-09-10 13:00', null, null, null, 'Confirmed'),
-(3, '2026-09-11 09:00', '2026-09-11 09:00', '2026-09-11 09:59', 59, 'Completed'),
-(4, '2026-09-11 15:00', null, null, null, 'Cancelled'),
-(5, '2026-09-12 11:00', null, null, null, 'Confirmed'),
-(1, '2026-09-12 14:00', null, null, null, 'Cancelled'),
-(2, '2026-09-13 08:00', '2026-09-13 08:03', '2026-09-13 09:00', 57, 'Completed'),
-(3, '2026-09-13 16:00', null, null, null, 'Confirmed'),
-(4, '2026-09-14 10:00', null, null, null, 'Confirmed'),
-(5, '2026-09-14 12:00', null, null, null, 'Confirmed');
+create table Room
+(
+    RoomID int identity(1,1) primary key,
+    RoomNumber varchar(10) not null unique,
+    Floor int not null,
+    Seats int not null,
+    Whiteboard bit not null, -- for true or false
+    CurrentStatus varchar(20) not null default 'Available'
+        constraint CK_Room_CurrentStatus check (CurrentStatus in ('Available', 'In Use'))
+);
 
 go
 
--- RoomAvailability (25 rows -- 5 slots per room)
-insert into RoomAvailability (RoomID, ReservationID, AvailableDate, AvailableStartTime, AvailableEndTime, AvailabilityStatus) values
-(1, 1, '2026-09-10', '10:00', '11:00', 'Booked'),
-(1, null, '2026-09-10', '11:00', '12:00', 'Available'),
-(1, 6, '2026-09-12', '14:00', '15:00', 'Booked'),
-(1, null, '2026-09-13', '09:00', '10:00', 'Available'),
-(1, null, '2026-09-14', '13:00', '14:00', 'Available'),
-(2, 2, '2026-09-10', '13:00', '14:00', 'Booked'),
-(2, 7, '2026-09-13', '08:00', '09:00', 'Booked'),
-(2, null, '2026-09-10', '14:00', '15:00', 'Available'),
-(2, null, '2026-09-11', '10:00', '11:00', 'Available'),
-(2, null, '2026-09-14', '15:00', '16:00', 'Available'),
-(3, 3, '2026-09-11', '09:00', '10:00', 'Booked'),
-(3, 8, '2026-09-13', '16:00', '17:00', 'Booked'),
-(3, null, '2026-09-11', '10:00', '11:00', 'Available'),
-(3, null, '2026-09-12', '09:00', '10:00', 'Available'),
-(3, null, '2026-09-13', '11:00', '12:00', 'Available'),
-(4, 4, '2026-09-11', '15:00', '16:00', 'Booked'),
-(4, 9, '2026-09-14', '10:00', '11:00', 'Booked'),
-(4, null, '2026-09-10', '09:00', '10:00', 'Available'),
-(4, null, '2026-09-12', '13:00', '14:00', 'Available'),
-(4, null, '2026-09-13', '14:00', '15:00', 'Available'),
-(5, 5, '2026-09-12', '11:00', '12:00', 'Booked'),
-(5, 10, '2026-09-14', '12:00', '13:00', 'Booked'),
-(5, null, '2026-09-10', '08:00', '09:00', 'Available'),
-(5, null, '2026-09-11', '16:00', '17:00', 'Available'),
-(5, null, '2026-09-13', '10:00', '11:00', 'Available');
+create table AppUser
+(
+    AppUserID int identity(1,1) primary key,
+    Email varchar(100) not null unique,
+    Password varchar(200) not null -- store a hash, never plain text, in a real system
+);
+
+go
+
+create table Reservation
+(
+    ReservationID int identity(1,1) primary key,
+    AppUserID int not null,
+    ReservationDateTime datetime not null default getdate(), -- when the reservation was made
+    CheckInDateTime datetime null,
+    CheckOutDateTime datetime null,
+    TotalTime as datediff(minute, CheckInDateTime, CheckOutDateTime), -- minutes, computed
+    ReservationStatus varchar(20) not null default 'Reserved'
+        constraint CK_Reservation_Status check (ReservationStatus in ('Reserved', 'CheckedIn', 'CheckedOut', 'Cancelled')),
+    constraint FK_Reservation_AppUser foreign key (AppUserID) references AppUser(AppUserID),
+    constraint CK_Reservation_CheckOutAfterCheckIn check (CheckOutDateTime is null or CheckOutDateTime >= CheckInDateTime)
+);
+
+go
+
+create table RoomAvailability
+(
+    RoomAvailabilityID int identity(1,1) primary key,
+    RoomID int not null,
+    AvailableDate date not null,
+    StartTime time not null,
+    EndTime time not null,
+    AvailabilityStatus varchar(20) not null default 'Available'
+        constraint CK_RoomAvailability_Status check (AvailabilityStatus in ('Available', 'Reserved')),
+    ReservationID int null, -- null until this 15-min slot is included in a reservation
+    constraint FK_RoomAvailability_Room foreign key (RoomID) references Room(RoomID),
+    constraint FK_RoomAvailability_Reservation foreign key (ReservationID) references Reservation(ReservationID),
+    constraint UQ_RoomAvailability_Slot unique (RoomID, AvailableDate, StartTime),
+    constraint CK_RoomAvailability_TimeOrder check (EndTime > StartTime),
+    constraint CK_RoomAvailability_15MinSlot check (datediff(minute, StartTime, EndTime) = 15) -- atomic 15-minute increments
+);
+
+go
+
+create table Sensor
+(
+    SensorID int identity(1,1) primary key,
+    RoomID int not null,
+    InstallationDate datetime not null default getdate(),
+    constraint FK_Sensor_Room foreign key (RoomID) references Room(RoomID)
+)
+
+go
+
+create table SensorLog
+(
+    SensorLogID int identity(1,1) primary key,
+    SensorID int not null,
+    EntryDateTime datetime not null,
+    ExitDateTime datetime null,
+    constraint FK_SensorLog_Sensor foreign key (SensorID) references Sensor(SensorID)
+)

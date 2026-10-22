@@ -1,13 +1,11 @@
-go
+drop table if exists SensorLog;
+drop table if exists Sensor;
 drop table if exists RoomAvailability;
-go
 drop table if exists Reservation;
-go
-drop table if exists Room;
-go
 drop table if exists AppUser;
-go
+drop table if exists Room;
 
+go
 
 create table Room (
     RoomID int identity(1,1) primary key,
@@ -52,3 +50,23 @@ create table RoomAvailability (
     constraint FK_RoomAvailability_Room foreign key (RoomID) references Room(RoomID),
     constraint FK_RoomAvailability_Reservation foreign key (ReservationID) references Reservation(ReservationID)
 );
+
+go
+
+create table Sensor
+(
+    SensorID int identity(1,1) primary key,
+    RoomID int not null,
+    InstallationDate datetime not null default getdate(),
+    constraint FK_Sensor_Room foreign key (RoomID) references Room(RoomID)
+)
+
+create table SensorLog
+(
+    SensorLogID int identity(1,1) primary key,
+    SensorID int not null,
+    EntryDateTime datetime not null,
+    ExitDateTime datetime not null,
+    constraint FK_SensorLog_Sensor foreign key (SensorID) references Sensor(SensorID)
+)
+
