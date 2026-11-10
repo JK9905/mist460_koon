@@ -6,11 +6,11 @@ insert into Room (RoomNumber, Floor, Seats, Whiteboard) values
 
 go
 
-insert into Sensor (SensorName, TransmitterName, RoomID) values
-('LD2410C', 'ESP32-S3-WROOM-1', 1),
-('LD2410C', 'ESP32-S3-WROOM-1', 2),
-('LD2410C', 'ESP32-S3-WROOM-1', 3),
-('LD2410C', 'ESP32-S3-WROOM-1', 4);
+insert into Sensor (SensorName, TransmitterName, RoomID, MacAddress) values
+('LD2410C', 'ESP32-S3-WROOM-1', 1, 'AA:BB:CC:DD:EE:FF'),
+('LD2410C', 'ESP32-S3-WROOM-1', 2, '11:22:33:44:55:66'),
+('LD2410C', 'ESP32-S3-WROOM-1', 3, '77:88:99:AA:BB:CC'),
+('LD2410C', 'ESP32-S3-WROOM-1', 4, 'DD:EE:FF:11:22:33');
 
 
 go

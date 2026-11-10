@@ -75,7 +75,7 @@ create table Reservation
     TotalTimeReserved int NOT NULL DEFAULT 0, -- total reserved time -- as datediff(minute, CheckInDateTime, CheckOutDateTime), -- minutes, computed
     ReservationStatus nvarchar(20) not null default 'Reserved',
     constraint PK_Reservation primary key (ReservationID),
-    constraint CK_Reservation_Status check (ReservationStatus in ('Reserved', 'CheckedIn', 'CheckedOut', 'Cancelled')),
+    constraint CK_Reservation_Status check (ReservationStatus in ('Pending', 'Reserved', 'CheckedIn', 'CheckedOut', 'Cancelled')),
     constraint FK_Reservation_AppUser foreign key (AppUserID) references AppUser(AppUserID),
     constraint CK_Reservation_CheckOutAfterCheckIn check (CheckOutDateTime is null or CheckOutDateTime >= CheckInDateTime),
     constraint CK_Reservation_TotalTime check (TotalTimeReserved <= 120) -- maximum 2 hours
@@ -91,7 +91,7 @@ create table RoomAvailability
     StartTime time not null,
     EndTime time not null,
     AvailabilityStatus nvarchar(20) not null default 'Available'
-        constraint CK_RoomAvailability_Status check (AvailabilityStatus in ('Available', 'Reserved')),
+        constraint CK_RoomAvailability_Status check (AvailabilityStatus in ('Available', 'Pending', 'Reserved')), -- 'Pending' = held while a student is selecting
     ReservationID int null, -- null until this 15-min slot is included in a reservation
     constraint FK_RoomAvailability_Room foreign key (RoomID) references Room(RoomID),
     constraint FK_RoomAvailability_Reservation foreign key (ReservationID) references Reservation(ReservationID),
